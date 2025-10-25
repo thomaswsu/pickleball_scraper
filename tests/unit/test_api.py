@@ -122,6 +122,31 @@ def test_locations_endpoint_filters_by_court_query(client, db_session, sample_lo
     assert slot_payload[0]["court_names"] == ["Sunrise Court"]
 
 
+def test_locations_endpoint_matches_location_names_for_court_filter(
+    client,
+    db_session,
+    sample_location,
+):
+    tz = ZoneInfo("America/Los_Angeles")
+    slot_time = datetime(2025, 10, 27, 9, 0, tzinfo=tz)
+    slot = AvailabilitySlot(
+        location_id=sample_location.id,
+        court_id="court-4",
+        court_name="Generic Court",
+        sport_id=settings.pickleball_sport_id,
+        duration_minutes=60,
+        slot_time_local=slot_time,
+        slot_time_utc=slot_time.astimezone(ZoneInfo("UTC")),
+    )
+    db_session.add(slot)
+    db_session.commit()
+
+    payload = client.get("/api/locations?court=mission").json()
+    slots = payload["locations"][0]["slots"]
+    assert len(slots) == 1
+    assert slots[0]["court_id"] == "court-4"
+
+
 def test_watch_crud_flow(client, sample_location):
     watch_payload = {
         "location_id": sample_location.id,

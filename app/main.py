@@ -262,11 +262,16 @@ def api_locations(
 
     payload: list[LocationAvailabilityResponse] = []
     target_sport_id = settings.pickleball_sport_id
-    normalized_court_query = court_query.strip() if court_query else None
+    normalized_court_query = court_query.strip().lower() if court_query else None
     for location in locations:
         ordered_slots = sorted(
             (slot for slot in location.slots if slot.slot_time_local is not None),
             key=lambda slot: slot.slot_time_local,
+        )
+        location_name_lower = (location.name or "").lower()
+        location_match = (
+            normalized_court_query
+            and normalized_court_query.lower() in location_name_lower
         )
         filtered_slots = _filter_slots(
             ordered_slots,
@@ -274,7 +279,7 @@ def api_locations(
             time_from=time_from,
             time_to=time_to,
             sport_filter=target_sport_id,
-            court_query=normalized_court_query,
+            court_query=None if location_match else normalized_court_query,
         )
         deduped_slots = _dedupe_slots(filtered_slots, location.timezone)
         payload.append(
