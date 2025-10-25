@@ -63,9 +63,13 @@ def upsert_location(db: Session, payload: dict) -> Location:
     return location
 
 
+DEFAULT_DURATION_MINUTES = 60
+
+
 def sync_availability(db: Session, payload: list[dict]) -> list[SlotRecord]:
     """Persist API payload and return new availability slots."""
     existing_slots = db.query(AvailabilitySlot).all()
+
     def normalize(dt: datetime) -> datetime:
         return dt.replace(tzinfo=None)
 
@@ -116,14 +120,14 @@ def sync_availability(db: Session, payload: list[dict]) -> list[SlotRecord]:
                     h, m, s = [int(part) for part in max_time.split(":")]
                     duration_minutes = h * 60 + m + (1 if s >= 30 else 0)
             if not duration_minutes:
-                duration_minutes = (location_payload.get("maxReservationTime") or 60)
+                duration_minutes = (location_payload.get("maxReservationTime") or DEFAULT_DURATION_MINUTES)
                 if isinstance(duration_minutes, str) and ":" in duration_minutes:
                     h, m, s = [int(part) for part in duration_minutes.split(":")]
                     duration_minutes = h * 60 + m + (1 if s >= 30 else 0)
                 elif isinstance(duration_minutes, (int, float)):
                     duration_minutes = int(duration_minutes)
                 else:
-                    duration_minutes = 60
+                    duration_minutes = DEFAULT_DURATION_MINUTES
 
             for raw_slot in court.get("availableSlots", []):
                 try:
@@ -134,7 +138,21 @@ def sync_availability(db: Session, payload: list[dict]) -> list[SlotRecord]:
                 storage_local_dt = normalize(local_dt)
                 key = (location.id, court_id, storage_local_dt)
                 incoming_keys.add(key)
-                if key in existing_index:
+                existing = existing_index.get(key)
+                if existing:
+                    # Backfill duration/sport/court metadata if it changed.
+                    changed = False
+                    if duration_minutes and existing.duration_minutes != duration_minutes:
+                        existing.duration_minutes = duration_minutes
+                        changed = True
+                    if sport_id and existing.sport_id != sport_id:
+                        existing.sport_id = sport_id
+                        changed = True
+                    if court_name and not existing.court_name:
+                        existing.court_name = court_name
+                        changed = True
+                    if changed:
+                        db.add(existing)
                     continue
 
                 slot_model = AvailabilitySlot(
@@ -143,7 +161,7 @@ def sync_availability(db: Session, payload: list[dict]) -> list[SlotRecord]:
                     court_name=court_name,
                     sport_id=sport_id,
                     duration_minutes=duration_minutes,
-                    slot_time_local=storage_local_dt,
+                    slot_time_local=local_dt,
                     slot_time_utc=utc_dt,
                 )
                 db.add(slot_model)

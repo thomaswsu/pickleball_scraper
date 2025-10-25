@@ -17,6 +17,8 @@ class SlotResponse(BaseModel):
     duration_minutes: Optional[int] = None
     slot_time_local: datetime
     slot_time_utc: datetime
+    court_count: int = 1
+    court_names: Optional[List[str]] = None
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -6,57 +6,154 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <title>SF Pickleball Availability — Court Watcher</title>
+    <title>SF Pickleball Court Watcher</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <header class="wrap">
-      <h1>SF Rec &amp; Park Court Watcher</h1>
-      <p class="sub">
-        Monitor live availability from rec.us and set up instant alerts.
-      </p>
-      <div class="toolbar">
-        <span id="lastSync" class="muted">Last sync: —</span>
-        <button id="refreshBtn" class="btn ghost" type="button">
-          Refresh now
-        </button>
+    <header class="hero">
+      <div class="wrap">
+        <p class="eyebrow">San Francisco Rec &amp; Park</p>
+        <h1>Pickleball Court Watcher</h1>
+        <p class="lead">
+          Live availability scraped from rec.us plus instant alerts when your
+          favorite courts free up. Built for quick checks on your phone.
+        </p>
+        <div class="hero-actions">
+          <button id="refresh-button" class="btn primary" type="button">
+            Refresh availability
+          </button>
+          <span id="last-sync" class="muted">Last sync —</span>
+        </div>
       </div>
     </header>
 
-    <main class="wrap grid">
-      <section class="card">
-        <div class="section-title">
-          <h2>Current Availability</h2>
-          <span id="locationCount" class="pill">— locations</span>
+    <main class="wrap layout">
+      <section class="panel availability" aria-live="polite">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Live feed</p>
+            <h2>Current Availability</h2>
+          </div>
+          <form id="filters-form" class="filters" novalidate>
+            <label>
+              <span>Date</span>
+              <input type="date" id="filter-date" />
+            </label>
+            <label>
+              <span>From</span>
+              <input type="time" id="filter-time-from" />
+            </label>
+            <label>
+              <span>To</span>
+              <input type="time" id="filter-time-to" />
+            </label>
+            <label>
+              <span>Court</span>
+              <input
+                type="text"
+                id="filter-court"
+                placeholder="Court name contains…"
+                inputmode="text"
+              />
+            </label>
+            <button class="btn ghost" type="button" id="filter-reset">
+              Reset
+            </button>
+          </form>
         </div>
-
-        <form id="filters" class="inline-form" novalidate>
-          <label
-            >Time from
-            <input type="time" id="timeFromFilter" />
-          </label>
-          <label
-            >Time to
-            <input type="time" id="timeToFilter" />
-          </label>
-          <button class="btn ghost" type="button" id="clearFiltersBtn">
-            Clear
-          </button>
-        </form>
-
-        <div id="durationSummary" class="duration"></div>
-        <div class="spacer"></div>
-
-        <div id="availabilityList" class="list" aria-live="polite"></div>
+        <p class="muted hint">
+          Use the date and time filters to zero in on openings that fit your
+          crew. Durations are shown on every slot so you know how long you’ll
+          get on court.
+        </p>
+        <div id="availability-empty" class="empty">
+          No open slots right now.
+        </div>
+        <div id="availability-list" class="locations"></div>
       </section>
 
-      <aside class="card">
-        <h2>Alerts &amp; History</h2>
-        <button id="alertsRefresh" class="btn ghost" type="button">
-          Refresh Alerts
-        </button>
-        <div class="spacer"></div>
-        <div id="alertsList" class="list muted">Loading…</div>
+      <aside class="panel sidebar">
+        <section class="card">
+          <h2>Create alert</h2>
+          <form id="watch-form" class="watch-form" novalidate>
+            <label>
+              <span>Location</span>
+              <select id="watch-location" required>
+                <option value="">Choose a location</option>
+              </select>
+            </label>
+            <label>
+              <span>Label</span>
+              <input
+                type="text"
+                id="watch-label"
+                placeholder="ex: Tuesday Doubles 9am"
+              />
+            </label>
+            <label>
+              <span>Court contains</span>
+              <input
+                type="text"
+                id="watch-court"
+                placeholder="Court 3, East, etc."
+              />
+            </label>
+            <label>
+              <span>Target date</span>
+              <input type="date" id="watch-date" />
+            </label>
+            <div class="watch-form-grid">
+              <label>
+                <span>Time from</span>
+                <input type="time" id="watch-time-from" />
+              </label>
+              <label>
+                <span>Time to</span>
+                <input type="time" id="watch-time-to" />
+              </label>
+            </div>
+            <label>
+              <span>Alert email</span>
+              <input
+                type="email"
+                id="watch-contact"
+                placeholder="you@example.com"
+              />
+            </label>
+            <label>
+              <span>Notes</span>
+              <textarea
+                id="watch-notes"
+                rows="2"
+                placeholder="Optional reminder for this alert"
+              ></textarea>
+            </label>
+            <button type="submit" class="btn primary">Save alert</button>
+            <p id="watch-form-message" class="form-message" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <h2>Saved alerts</h2>
+            <button type="button" class="btn ghost" id="watchers-refresh">
+              Refresh
+            </button>
+          </div>
+          <div id="watchers-list" class="stack muted">
+            No alerts yet.
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <h2>Alert history</h2>
+            <button type="button" class="btn ghost" id="alerts-refresh">
+              Refresh
+            </button>
+          </div>
+          <div id="alerts-list" class="stack muted">Loading…</div>
+        </section>
       </aside>
     </main>
 
