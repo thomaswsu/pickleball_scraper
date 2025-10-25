@@ -1,26 +1,65 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SF Pickleball Availability — Court Watcher</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header>
-    <h1>SF Rec & Park Court Watcher</h1>
-    <p>Monitor live availability and set up alerts for pickleball courts.</p>
-    <button id="refreshBtn">Refresh now</button>
-  </header>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>SF Pickleball Availability — Court Watcher</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="wrap">
+      <h1>SF Rec &amp; Park Court Watcher</h1>
+      <p class="sub">
+        Monitor live availability from rec.us and set up instant alerts.
+      </p>
+      <div class="toolbar">
+        <span id="lastSync" class="muted">Last sync: —</span>
+        <button id="refreshBtn" class="btn ghost" type="button">
+          Refresh now
+        </button>
+      </div>
+    </header>
 
-  <main>
-    <section>
-      <h2>Current Availability</h2>
-      <div id="availabilityList"></div>
-    </section>
-  </main>
+    <main class="wrap grid">
+      <section class="card">
+        <div class="section-title">
+          <h2>Current Availability</h2>
+          <span id="locationCount" class="pill">— locations</span>
+        </div>
 
-  <!-- ✅ External script -->
-  <script src="app.js" defer></script>
-</body>
+        <form id="filters" class="inline-form" novalidate>
+          <label
+            >Time from
+            <input type="time" id="timeFromFilter" />
+          </label>
+          <label
+            >Time to
+            <input type="time" id="timeToFilter" />
+          </label>
+          <button class="btn ghost" type="button" id="clearFiltersBtn">
+            Clear
+          </button>
+        </form>
+
+        <div id="durationSummary" class="duration"></div>
+        <div class="spacer"></div>
+
+        <div id="availabilityList" class="list" aria-live="polite"></div>
+      </section>
+
+      <aside class="card">
+        <h2>Alerts &amp; History</h2>
+        <button id="alertsRefresh" class="btn ghost" type="button">
+          Refresh Alerts
+        </button>
+        <div class="spacer"></div>
+        <div id="alertsList" class="list muted">Loading…</div>
+      </aside>
+    </main>
+
+    <script src="/static/app.js" defer></script>
+  </body>
 </html>
