@@ -58,6 +58,19 @@ def test_sync_availability_creates_and_removes_slots(db_session):
     assert db_session.query(AvailabilitySlot).count() == 0
 
 
+def test_sync_availability_uses_current_rec_court_number(db_session):
+    payload = sample_payload("2025-10-27 09:00:00")
+    court = payload[0]["location"]["courts"][0]
+    court.pop("name")
+    court["courtNumber"] = "Court 9"
+
+    sync_availability(db_session, payload)
+    db_session.commit()
+
+    slot = db_session.query(AvailabilitySlot).one()
+    assert slot.court_name == "Court 9"
+
+
 def test_create_alerts_emits_when_watch_matches(db_session):
     location = Location(
         id="loc-123",

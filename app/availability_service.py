@@ -94,7 +94,11 @@ def sync_availability(db: Session, payload: list[dict]) -> list[SlotRecord]:
             court_id = court.get("id")
             if not court_id:
                 continue
-            court_name = court.get("name") or court.get("displayName")
+            court_name = (
+                court.get("name")
+                or court.get("displayName")
+                or court.get("courtNumber")
+            )
             sport_id = None
             sports = court.get("sports") or []
             if sports:
@@ -258,7 +262,7 @@ def create_alerts(db: Session, slots: Iterable[SlotRecord]) -> list[Alert]:
             watch.last_triggered_at = datetime.now(tz=UTC)
             watch.trigger_count = (watch.trigger_count or 0) + 1
             try:
-                send_email_alert(
+                send_alert(
                     watch=watch,
                     subject=f"Court available at {slot.location_name}",
                     body=(

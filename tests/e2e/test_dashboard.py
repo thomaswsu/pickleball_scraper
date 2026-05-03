@@ -19,6 +19,7 @@ def test_dashboard_flow(page, e2e_base_url):
     expect(page.get_by_role("heading", name="Playwright Courts")).to_be_visible()
 
     label_input = page.get_by_placeholder("ex: Tuesday Doubles 9am")
+    page.locator("#watch-location").select_option("e2e-location")
     label_input.fill("Playwright Watch")
     page.get_by_placeholder("you@example.com").fill("playwright@example.com")
     page.get_by_role("button", name="Save alert").click()

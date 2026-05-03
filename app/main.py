@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from contextlib import suppress
+from contextlib import asynccontextmanager, suppress
 from datetime import date, datetime, time
 from collections import defaultdict
 from pathlib import Path
@@ -40,7 +40,27 @@ BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
 TEMPLATES_DIR = BASE_DIR / "templates"
 
-app = FastAPI(title="Pickleball Court Watcher", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(fastapi_app: FastAPI):
+    """Create schema and manage the optional background scraper task."""
+    Base.metadata.create_all(bind=engine)
+    ensure_schema()
+    fastapi_app.state.scraper_task = None
+    if settings.scraper_enabled:
+        fastapi_app.state.scraper_task = asyncio.create_task(_scraper_worker())
+
+    try:
+        yield
+    finally:
+        task: asyncio.Task | None = getattr(fastapi_app.state, "scraper_task", None)
+        if task:
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+
+
+app = FastAPI(title="Pickleball Court Watcher", version="1.0.0", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 DEFAULT_DURATION_MINUTES = 60
@@ -152,26 +172,6 @@ async def _scraper_worker() -> None:
         raise
     finally:
         await client.close()
-
-
-@app.on_event("startup")
-async def on_startup() -> None:
-    """Create schema and launch the scraper if enabled."""
-    Base.metadata.create_all(bind=engine)
-    ensure_schema()
-    app.state.scraper_task = None
-    if settings.scraper_enabled:
-        app.state.scraper_task = asyncio.create_task(_scraper_worker())
-
-
-@app.on_event("shutdown")
-async def on_shutdown() -> None:
-    """Stop the background scraper cleanly."""
-    task: asyncio.Task | None = getattr(app.state, "scraper_task", None)
-    if task:
-        task.cancel()
-        with suppress(asyncio.CancelledError):
-            await task
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -288,6 +288,7 @@ def api_locations(
                 name=location.name,
                 address=location.address,
                 image_url=location.image_url,
+                booking_url=f"https://www.rec.us/locations/{location.id}",
                 slots=deduped_slots,
             )
         )

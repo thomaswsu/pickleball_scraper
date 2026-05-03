@@ -15,15 +15,13 @@ A minimal FastAPI application that scrapes public availability data from [rec.us
 1. **Install dependencies**
 
    ```bash
-   python3 -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
+   poetry install --with dev
    ```
 
 2. **Run the app**
 
    ```bash
-   uvicorn app.main:app --reload
+   poetry run uvicorn app.main:app --reload
    ```
 
 3. Visit http://127.0.0.1:8000 to access the dashboard. The scraper kicks off immediately; the first sync usually takes a few seconds.
@@ -75,11 +73,11 @@ Unit and service tests live under `tests/unit`, while browser-based end-to-end c
 
 ```bash
 # run quick unit/service tests
-pytest -m \"not e2e\"
+poetry run pytest -m "not e2e"
 
 # install browsers once, then execute the Playwright suite
-playwright install
-pytest -m e2e
+poetry run playwright install
+poetry run pytest -m e2e
 ```
 
 The E2E suite boots a temporary uvicorn server against an isolated SQLite DB, drives the web UI via Playwright, and tears everything down automatically.

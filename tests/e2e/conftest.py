@@ -14,6 +14,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.config import get_settings
 from app.db import Base
 from app.models import AvailabilitySlot, Location
 
@@ -41,6 +42,7 @@ def e2e_base_url(tmp_path_factory) -> str:
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     Session = sessionmaker(bind=engine)
+    settings = get_settings()
 
     with Session() as session:
         location = Location(
@@ -57,7 +59,8 @@ def e2e_base_url(tmp_path_factory) -> str:
             location_id=location.id,
             court_id="court-1",
             court_name="Court 1",
-            sport_id=None,
+            sport_id=settings.pickleball_sport_id,
+            duration_minutes=60,
             slot_time_local=slot_local.replace(tzinfo=None),
             slot_time_utc=slot_local.astimezone(ZoneInfo("UTC")),
         )
